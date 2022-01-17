@@ -4,7 +4,7 @@
 module Main where
 
 import Control.Applicative (empty)
-import Control.Monad (guard)
+import Control.Monad (guard, void)
 import Data.Functor (($>))
 import FRP.Yampa
 import Graphics.Gloss
@@ -35,13 +35,27 @@ paddleBall theta v = proc inp -> do
 
 gameOver :: SF (Event InputEvent) (Picture, Event ())
 gameOver = proc inp -> do
-  let msg = color red . scale 0.3 0.3 $ text "Game Over"
-      restart = inp >>= clicked
-  returnA -< (msg, restart)
+  let msg = color red . translate (-110) 30 . scale 0.3 0.3 $ text "Game Over"
+  (b, restart) <- restartButton (0, 0) -< inp
+  returnA -< (pictures [msg, b], restart)
+
+restartButton :: Point -> SF (Event InputEvent) (Picture, Event ())
+restartButton c@(cx, cy) = proc inp -> do
+  clicked <- click -< inp
+  returnA -< (image, void . filterE inBounds $ clicked)
   where
-    clicked :: InputEvent -> Event ()
-    clicked = \case
-      Gloss.EventKey (Gloss.MouseButton Gloss.LeftButton) _ _ _ -> pure ()
+    w = 100
+    h = 25
+    inBounds (x, y) = x < cx + (w / 2) && x > cx - (w / 2) && y < cy + (h / 2) && y > cy - (h / 2)
+    image = pictures [label, box]
+    label = color white . translate (-30) (-7) . scale 0.15 0.15 $ text "Restart"
+    box = color white . uncurry translate c $ rectangleWire w h
+
+click :: SF (Event InputEvent) (Event (Float, Float))
+click = arr (>>= go)
+  where
+    go = \case
+      Gloss.EventKey (Gloss.MouseButton Gloss.LeftButton) _ _ x -> pure x
       _ -> empty
 
 inRect :: Point -> Point -> Point -> Bool
