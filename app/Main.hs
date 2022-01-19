@@ -25,9 +25,9 @@ paddleBall theta v = proc inp -> do
           paddle = translate mPos' (-200) . color white $ rectangleSolid 100 10
           ball = translate xPos yPos . color red $ circleSolid 10
           walls = color white $ rectangleWire 500 500
-          paddleHit = inRect (mPos' + 50, -190) (mPos' - 50, -200) (xPos, yPos -10)
           miss = guard $ yPos <= (-240)
           scoreCard = color white . translate (-25) 260 . scale 0.1 0.1 . text $ "Score: " <> show score
+      (isEvent -> paddleHit) <- edge -< inRect (mPos' + 50, -190) (mPos' - 50, -200) (xPos, yPos -10)
       xCollision <- edge -< xPos >= 240 || xPos <= (-240)
       yCollision <- edge -< yPos >= 240 || paddleHit
       xVel <- accumHold (v * cos theta) -< xCollision $> negate
