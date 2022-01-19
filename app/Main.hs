@@ -27,11 +27,13 @@ paddleBall theta v = proc inp -> do
           walls = color white $ rectangleWire 500 500
           paddleHit = inRect (mPos' + 50, -190) (mPos' - 50, -200) (xPos, yPos -10)
           miss = guard $ yPos <= (-240)
+          scoreCard = color white . translate (-25) 260 . scale 0.1 0.1 . text $ "Score: " <> show score
       xCollision <- edge -< xPos >= 240 || xPos <= (-240)
       yCollision <- edge -< yPos >= 240 || paddleHit
       xVel <- accumHold (v * cos theta) -< xCollision $> negate
       yVel <- accumHold (v * sin theta) -< yCollision $> negate
-  returnA -< (pictures [paddle, ball, walls], miss)
+      score <- accumHold (0 :: Int) -< guard paddleHit $> succ
+  returnA -< (pictures [paddle, ball, walls, scoreCard], miss)
 
 gameOver :: SF (Event InputEvent) (Picture, Event ())
 gameOver = proc inp -> do
